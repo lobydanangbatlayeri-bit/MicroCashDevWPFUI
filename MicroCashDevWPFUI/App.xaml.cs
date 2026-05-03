@@ -1,6 +1,5 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using MicroCashDevWPFUI.Api.Infrastructure;
 using MicroCashDevWPFUI.Data;
 using MicroCashDevWPFUI.Services.CoreService;
 using MicroCashDevWPFUI.ViewModels.Pages;
@@ -69,9 +68,6 @@ namespace MicroCashDevWPFUI
 				builder.RegisterAssemblyTypes(typeof(App).Assembly)
 					.Where(t => typeof(INavigationWindow).IsAssignableFrom(t) && !t.IsInterface)
 					.As<INavigationWindow>()
-					.SingleInstance();
-
-				builder.RegisterType<ScanNotaMemoryStore>()
 					.SingleInstance();
 			})
 			.ConfigureServices((context, services) =>

@@ -89,28 +89,22 @@ namespace MicroCashDevWPFUI.Data
 
 				changed = true;
 			}
+            // ========== HAPUS MENU SCAN NOTA ==========
+            var scanNota = context.Menus.FirstOrDefault(m => m.PageKey == "ScanNotaPage");
 
-			// ========== Tambah Menu Scan Nota Jika Belum Ada ==========
-			var scanNota = context.Menus.FirstOrDefault(m => m.PageKey == "ScanNotaPage");
+            if (scanNota != null)
+            {
+                var relations = context.UserMenus
+                    .Where(um => um.MenuId == scanNota.Id);
 
-			if (scanNota == null)
-			{
-				scanNota = new Menu
-				{
-					NamaMenu = "Scan Nota",
-					PageKey = "ScanNotaPage",
-					Icon = "QrCode20",
-					Urutan = 10
-				};
+                context.UserMenus.RemoveRange(relations);
+                context.Menus.Remove(scanNota);
 
-				context.Menus.Add(scanNota);
-				changed = true;
-			}
+                context.SaveChanges();
+            }
 
-			if (changed) context.SaveChanges();
-
-			// ========== Hubungkan Menu ke Admin ==========
-			if (!context.UserMenus.Any(um => um.UserId == admin!.Id))
+            // ========== Hubungkan Menu ke Admin ==========
+            if (!context.UserMenus.Any(um => um.UserId == admin!.Id))
 			{
 				var allMenus = context.Menus.ToList();
 

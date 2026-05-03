@@ -1,6 +1,4 @@
-﻿using MicroCashDevWPFUI.Api.Infrastructure;
-using MicroCashDevWPFUI.DTOs;
-using MicroCashDevWPFUI.Matching.Interfaces;
+﻿using MicroCashDevWPFUI.DTOs;
 using MicroCashDevWPFUI.Models;
 using MicroCashDevWPFUI.Services.CoreService;
 using MicroCashDevWPFUI.Services.PembelianService;
@@ -20,9 +18,6 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 		private readonly IProdukService _produkService;
 		private readonly IProdukSatuanService _produkSatuanService;
 		private readonly IRestokService _restokService;
-		private readonly ScanNotaMemoryStore _store;
-		private readonly ISupplierMatcher _supplierMatcher;
-		private readonly IProductMatcher _productMatcher;
 		private readonly IPembelianService _pembelianService;
 
 		[ObservableProperty]
@@ -68,9 +63,6 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 
 		private ProdukSatuan? _selectedProdukSatuan;
 		private bool _initialized;
-		private Queue<RestokNotaScanItemDto> _scanQueue = new();
-		private RestokNotaScanItemDto? _currentScanItem;
-		private bool _isScanMode = false;
 		private List<ProductItem> _productItems = new();
 
 		public RestokNotaViewModel(
@@ -79,9 +71,6 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 			IProdukService produkService,
 			IProdukSatuanService produkSatuanService,
 			IRestokService restokService,
-			ScanNotaMemoryStore store,
-			ISupplierMatcher supplierMatcher,
-			IProductMatcher productMatcher,
 			IPembelianService pembelianService)
 		{
 			_dialogService = dialogService;
@@ -89,9 +78,6 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 			_produkService = produkService;
 			_produkSatuanService = produkSatuanService;
 			_restokService = restokService;
-			_store = store;
-			_supplierMatcher = supplierMatcher;
-			_productMatcher = productMatcher;
 			_pembelianService = pembelianService;
 		}
 
@@ -232,9 +218,6 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 
 		private void RecalculateTotal()
 		{
-			if (_isScanMode)
-				return;
-
 			Total = ItemsStockProduk.Sum(x => x.SubTotal);
 		}
 
@@ -400,11 +383,6 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 			HargaBeli = 0;
 			NomorBatch = string.Empty;
 			TanggalKadarluasa = null;
-
-			if (_isScanMode)
-			{
-				await LoadNextScanItem();
-			}
 		}
 
 		[RelayCommand]
@@ -535,110 +513,7 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 
 			// Internal state
 			_selectedProdukSatuan = null;
-			_isScanMode = false;
 		}
-
-		public async Task LoadFromScanAsync()
-		{
-			var data = _store.Get();
-			if (data == null)
-				return;
-
-			_isScanMode = true;
-
-			var matched = _supplierMatcher.FindClosest(ItemsSupplier, data.SupplierNama);
-			SelectedSupplier = matched ?? ItemsSupplier.FirstOrDefault();
-
-			NomorNota = data.NomorNota;
-			TanggalRestok = data.TanggalRestok;
-			TanggalMasuk = data.TanggalRestok;
-
-			Total = data.Total;
-
-			_scanQueue = new Queue<RestokNotaScanItemDto>(data.Items);
-
-			// load item pertama ke form
-			await LoadNextScanItem();
-
-			_store.Clear();
-		}
-
-		private async Task LoadNextScanItem()
-		{
-			if (!_isScanMode)
-				return;
-
-			if (!_scanQueue.Any())
-			{
-				_currentScanItem = null;
-				_isScanMode = false;
-				await _dialogService.ShowMessage("Semua item scan sudah dimasukkan.");
-				return;
-			}
-
-			_currentScanItem = _scanQueue.Dequeue();
-
-			// tampilkan hasil OCR
-			NamaBarang = _currentScanItem.NamaBarang;
-
-			// 🔥 MATCH PRODUK DI SINI
-			var matchedProduct = _productMatcher.FindClosest(
-				_productItems,
-				_currentScanItem.NamaBarang);
-
-			if (matchedProduct != null)
-			{
-				NamaBarang = matchedProduct.NamaBarang;
-			}
-			else
-			{
-				// biarkan hasil OCR, user pilih manual
-			}
-
-			TambahStock = _currentScanItem.Jumlah;
-			HargaBeli = _currentScanItem.HargaBeli;
-			SubTotal = _currentScanItem.SubTotal;
-			NomorBatch = _currentScanItem.NomorBatch;
-			TanggalKadarluasa = _currentScanItem.TanggalKadarluasa;
-		}
-
-		[RelayCommand]
-		private async Task TerimaScanNota()
-		{
-			var data = _store.Get();
-
-			if (data == null)
-			{
-				Debug.WriteLine("Data scan kosong.");
-				return;
-			}
-
-			var detail = new StringBuilder();
-			detail.AppendLine("===== HEADER =====");
-			detail.AppendLine($"Supplier     : {data.SupplierNama}");
-			detail.AppendLine($"Nomor Nota   : {data.NomorNota}");
-			detail.AppendLine($"Tanggal      : {data.TanggalRestok}");
-			detail.AppendLine($"Total        : {data.Total}");
-			detail.AppendLine("");
-			detail.AppendLine("===== ITEMS =====");
-
-			foreach (var item in data.Items)
-			{
-				detail.AppendLine("----------------------");
-				detail.AppendLine($"Nama Barang : {item.NamaBarang}");
-				detail.AppendLine($"Jumlah      : {item.Jumlah}");
-				detail.AppendLine($"Harga Beli  : {item.HargaBeli}");
-				detail.AppendLine($"SubTotal    : {item.SubTotal}");
-				detail.AppendLine($"Batch       : {item.NomorBatch}");
-				detail.AppendLine($"Exp         : {item.TanggalKadarluasa}");
-			}
-
-			// Cetak ke Debug Console
-			Debug.WriteLine(detail.ToString());
-
-			await LoadFromScanAsync();
-		}
-
 
 	}
 }

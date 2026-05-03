@@ -15,12 +15,6 @@
 
   <ItemGroup>
     <Content Include="logo.ico" />
-    <Content Include="OCR\tessdata\eng.traineddata">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="OCR\tessdata\ind.traineddata">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="wpfui-icon.ico" />
   </ItemGroup>
 
@@ -50,8 +44,6 @@
     <None Remove="Assets\logo.png" />
     <None Remove="Assets\wpfui-icon-256.png" />
     <None Remove="Assets\wpfui-icon-1024.png" />
-    <None Remove="OCR\tessdata\eng.traineddata" />
-    <None Remove="OCR\tessdata\ind.traineddata" />
   </ItemGroup>
 
   <ItemGroup>
@@ -65,16 +57,5 @@
   <ItemGroup>
      <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-
-    <ItemGroup>
-        <Content Include="Api\Web\**\*">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="OCR\Models\" />
-      <Folder Include="OCR\Parsing\Interfaces\" />
-    </ItemGroup>
 
 </Project>

@@ -247,7 +247,7 @@
 						HorizontalAlignment="Center"
 						Margin="0,20,0,0">
 
-				<ui:Button Height="60"
+                <ui:Button Height="60"
 						   Width="150"
 						   Margin="20"
 						   Grid.Column="1"
@@ -255,21 +255,10 @@
 						   Command="{Binding ViewModel.TambahObatCommand}"
 						   HorizontalAlignment="Center"
 						   Click="BtnTambahObat_Click">
-					<ui:TextBlock Text="Tambah Obat" />
-				</ui:Button>
+                    <ui:TextBlock Text="Tambah Obat" />
+                </ui:Button>
 
-				<ui:Button Height="60"
-						   Width="150"
-						   Margin="20"
-						   Grid.Column="1"
-						   Appearance="Primary"
-						   Command="{Binding ViewModel.TerimaScanNotaCommand}"
-						   HorizontalAlignment="Center"
-						   Click="BtnTambahObat_Click">
-					<ui:TextBlock Text="Terima Scan Nota" />
-				</ui:Button>
-
-			</StackPanel>
+            </StackPanel>
 
 		</StackPanel>
 
