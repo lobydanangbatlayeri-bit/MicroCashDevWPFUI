@@ -1,0 +1,719 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Nota - MicroCash</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0078D7, #00B4DB);
+            padding: 20px;
+            margin: 0;
+        }
+
+        .ocr-line.active {
+            background: #e6f2ff;
+        }
+
+        .dropdown-action {
+            margin-top: 5px;
+            padding: 5px;
+            width: 100%;
+        }
+
+        .sub-button-container {
+            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .sub-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: 1px solid #0078D7;
+            cursor: pointer;
+            background: #ffffff;
+            color: #0078D7;
+            font-weight: 500;
+            transition: 0.2s ease;
+        }
+
+            .sub-btn:hover {
+                background: #0078D7;
+                color: #ffffff;
+            }
+
+            .sub-btn:active {
+                transform: scale(0.96);
+            }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            max-width: 480px;
+            margin: auto;
+            text-align: center;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            min-width: 500px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 6px;
+            text-align: center;
+        }
+
+            td input {
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        .upload-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+            .upload-buttons label {
+                flex: 1;
+                padding: 12px;
+                border-radius: 8px;
+                background: #f0f2f5;
+                cursor: pointer;
+                font-size: 14px;
+                border: 1px solid #ddd;
+            }
+
+                .upload-buttons label:hover {
+                    background: #e4e6eb;
+                }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            margin-top: 15px;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #0078D7;
+            color: white;
+            transition: 0.2s;
+        }
+
+            button:disabled {
+                background-color: #999;
+                cursor: not-allowed;
+            }
+
+        img.preview {
+            margin-top: 15px;
+            max-width: 100%;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>📄 Scan Nota - MicroCash</h2>
+
+        <div class="upload-buttons">
+            <!-- Kamera -->
+            <label>
+                📷 Kamera
+                <input type="file"
+                       id="cameraInput"
+                       accept="image/*"
+                       capture="environment"
+                       onchange="previewImage(this)">
+            </label>
+
+            <!-- Galeri -->
+            <label>
+                🖼 Galeri
+                <input type="file"
+                       id="galleryInput"
+                       accept="image/*"
+                       onchange="previewImage(this)">
+            </label>
+        </div>
+
+        <img id="preview" class="preview" />
+
+        <button onclick="processFoto()" id="btnProcess">
+            Prosess Gambar
+        </button>
+
+        <div id="ocrResult" class="status"></div>
+
+        <hr style="margin:20px 0">
+
+        <button id="btnMulaiItem" onclick="mulaiItem()">➕ Mulai Item</button>
+        <button onclick="simpanItem()">💾 Simpan Item</button>
+
+        <h3>Data Terpilih</h3>
+        <div id="selectedData" style="font-size:14px;text-align:left"></div>
+        <div id="submitStatus" class="status"></div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let ocrLines = [];
+        let selectedLine = "";
+        let sedangInputItem = false;
+
+        let draftItem = {
+            namaBarang: "",
+            jumlah: 0,
+            hargaBeli: 0,
+            subTotal: 0,
+            tanggalKadarluasa: null,
+            nomorBatch: null
+        };
+
+        let selectedData = {
+            supplier: "",
+            nomorNota: "",
+            tanggal: "",
+            total: "",
+            items: []
+        };
+
+        function previewImage(input) {
+            const preview = document.getElementById("preview");
+
+            if (input.files && input.files[0]) {
+                selectedFile = input.files[0];
+
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = "block";
+                };
+                reader.readAsDataURL(selectedFile);
+            }
+        }
+
+        async function processFoto() {
+            const resultDiv = document.getElementById("ocrResult");
+            const btn = document.getElementById("btnProcess");
+
+            if (!selectedFile) {
+                alert("Silakan pilih foto dulu");
+                return;
+            }
+
+            btn.disabled = true;
+            resultDiv.innerHTML = "Memproses OCR...";
+
+            const formData = new FormData();
+            formData.append("file", selectedFile);
+
+            const response = await fetch("/api/scan-nota", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            btn.disabled = false;
+
+            if (!data.text) {
+                resultDiv.innerHTML = "OCR gagal.";
+                return;
+            }
+
+            tampilkanBaris(data.text);
+        }
+
+        function tampilkanBaris(text) {
+            const resultDiv = document.getElementById("ocrResult");
+
+            ocrLines = text.split("\n").filter(x => x.trim() !== "");
+
+            resultDiv.innerHTML = "";
+
+            ocrLines.forEach(line => {
+                const div = document.createElement("div");
+                div.textContent = line;
+                div.style.padding = "6px";
+                div.style.borderBottom = "1px solid #eee";
+                div.style.cursor = "pointer";
+                div.classList.add("ocr-line");
+
+                div.onclick = function () {
+                    pilihBaris(line, div);
+                };
+
+                resultDiv.appendChild(div);
+            });
+        }
+
+        function pilihBaris(line, element) {
+
+            document.querySelectorAll(".ocr-line").forEach(x => x.classList.remove("active"));
+            element.classList.add("active");
+            // Hapus container lain jika ada
+            const existing = document.querySelectorAll(".sub-button-container");
+            existing.forEach(x => x.remove());
+
+            const container = document.createElement("div");
+            container.className = "sub-button-container";
+
+            let buttons = [];
+
+            if (sedangInputItem) {
+                buttons = [
+                    { key: "namaBarang", label: "Nama" },
+                    { key: "jumlah", label: "Qty" },
+                    { key: "hargaBeli", label: "Harga" },
+                    { key: "subTotal", label: "Subtotal" },
+                    { key: "nomorBatch", label: "Batch" },
+                    { key: "tanggalKadarluasa", label: "Exp" },
+                    { key: "simpan", label: "💾 Simpan" }
+                ];
+            } else {
+                buttons = [
+                    { key: "supplier", label: "Supplier" },
+                    { key: "nomorNota", label: "No Nota" },
+                    { key: "tanggal", label: "Tanggal" },
+                    { key: "total", label: "Total" },
+                    { key: "mulaiItem", label: "➕ Item" }
+                ];
+            }
+
+            buttons.forEach(btn => {
+
+                const button = document.createElement("button");
+                button.className = "sub-btn";
+                button.textContent = btn.label;
+
+                button.onclick = function (e) {
+                    e.stopPropagation();
+
+                    handleAssign(btn.key, line);
+                    tampilkanSelectedData();
+                    container.remove();
+                };
+
+                container.appendChild(button);
+            });
+
+            element.appendChild(container);
+        }
+
+        function handleAssign(key, line) {
+
+            // ===== MODE ITEM =====
+            if (sedangInputItem) {
+
+                if (key === "simpan") {
+                    simpanItem();
+                    return;
+                }
+
+                if (key === "jumlah" || key === "hargaBeli" || key === "subTotal") {
+                    draftItem[key] = ambilAngka(line);
+                }
+                else if (key === "tanggalKadarluasa") {
+
+                    let expFull = line.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/);
+                    let expMonthYear = line.match(/\b\d{1,2}[\/\-\.]\d{2,4}\b/);
+
+                    if (expFull) {
+                        draftItem.tanggalKadarluasa = normalizeTanggal(expFull[0]);
+                    }
+                    else if (expMonthYear) {
+                        const parts = expMonthYear[0].split(/[\/\-\.]/);
+                        draftItem.tanggalKadarluasa = `01/${parts[0]}/${parts[1]}`;
+                    }
+                }
+                else {
+                    draftItem[key] = line.trim();
+                }
+
+            }
+            // ===== MODE NORMAL =====
+            else {
+
+                if (key === "mulaiItem") {
+                    mulaiItem();
+                    return;
+                }
+
+                if (key === "total") {
+                    selectedData.total = ambilAngka(line);
+                }
+                else if (key === "tanggal") {
+
+                    // ambil hanya pola tanggal 27/01/2026
+                    const match = line.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/);
+
+                    if (match) {
+                        selectedData.tanggal = normalizeTanggal(match[0]);
+                    } else {
+                        alert("Tanggal tidak ditemukan di baris ini");
+                    }
+                }
+                else {
+                    selectedData[key] = line.trim();
+                }
+            }
+        }
+
+        function tampilkanSelectedData() {
+            const div = document.getElementById("selectedData");
+
+            let html = `
+            <b>Supplier:</b> ${selectedData.supplier}<br>
+            <b>Nomor Nota:</b> ${selectedData.nomorNota}<br>
+            <b>Tanggal:</b> ${selectedData.tanggal}<br>
+            <b>Total:</b> ${selectedData.total}<br><br>
+            <b>Items:</b><br>
+        `;
+
+            if (selectedData.items.length > 0) {
+
+                html += `
+    <div class="table-wrapper">
+    <table border="1">
+        <tr style="background:#f0f0f0">
+            <th>Nama</th>
+            <th>Qty</th>
+            <th>Harga</th>
+            <th>Subtotal</th>
+            <th>Batch</th>
+            <th>Exp</th>
+            <th>Hapus</th>
+        </tr>
+    `;
+
+                selectedData.items.forEach((item, index) => {
+                    html += `
+        <tr>
+            <td><input type="text" value="${item.namaBarang}"
+                onchange="updateItem(${index}, 'namaBarang', this.value)"></td>
+
+            <td><input type="number" value="${item.jumlah}"
+                onchange="updateItem(${index}, 'jumlah', this.value)"></td>
+
+            <td><input type="number" value="${item.hargaBeli}" step="0.01"
+                onchange="updateItem(${index}, 'hargaBeli', this.value)"></td>
+
+            <td><input type="number" value="${item.subTotal}" step="0.01"
+                onchange="updateItem(${index}, 'subTotal', this.value)"></td>
+
+            <td><input type="text" value="${item.nomorBatch || ''}"
+                onchange="updateItem(${index}, 'nomorBatch', this.value)"></td>
+
+            <td><input type="text" value="${item.tanggalKadarluasa || ''}"
+                onchange="updateItem(${index}, 'tanggalKadarluasa', this.value)"></td>
+
+            <td>
+                <button onclick="hapusItem(${index})"
+                    style="background:red;color:white">
+                    X
+                </button>
+            </td>
+        </tr>
+        `;
+                });
+
+                html += `
+                </table>
+                </div>
+
+                <button id="btnKirim"
+                    onclick="kirimHasil()"
+                    style="margin-top:15px;background:green;">
+                    🚀 Kirim Hasil ke Aplikasi
+                </button>
+            `;
+
+            } else {
+                html += `<i>Belum ada item</i>`;
+            }
+
+            div.innerHTML = html;
+        }
+
+        async function kirimHasil() {
+
+            const statusDiv = document.getElementById("submitStatus");
+            const btn = document.getElementById("btnKirim");
+
+            if (selectedData.items.length === 0) {
+                alert("Belum ada item.");
+                return;
+            }
+
+            // UI loading state
+            btn.disabled = true;
+            btn.innerText = "⏳ Mengirim data...";
+            statusDiv.className = "status";
+            statusDiv.innerHTML = "Mengirim data ke aplikasi...";
+
+            // ===== Convert tanggalRestok ke ISO =====
+            let tanggalRestokIso = null;
+
+            if (selectedData.tanggal) {
+
+                const parts = selectedData.tanggal.split(/[\/\-\.]/);
+
+                if (parts.length === 3) {
+
+                    let hari = parts[0].padStart(2, '0');
+                    let bulan = parts[1].padStart(2, '0');
+                    let tahun = parts[2];
+
+                    if (tahun.length === 2) {
+                        tahun = "20" + tahun;
+                    }
+
+                    tanggalRestokIso = `${tahun}-${bulan}-${hari}T00:00:00`;
+                }
+            }
+
+            // fallback kalau kosong
+            if (!tanggalRestokIso) {
+                tanggalRestokIso = new Date().toISOString();
+            }
+
+            const payload = {
+                supplierNama: selectedData.supplier,
+                nomorNota: selectedData.nomorNota,
+                tanggalRestok: tanggalRestokIso,
+                total: selectedData.total,
+                items: selectedData.items.map(x => {
+
+                    let isoTanggal = null;
+
+                    if (x.tanggalKadarluasa && x.tanggalKadarluasa.trim() !== "") {
+
+                        const parts = x.tanggalKadarluasa.split(/[\/\-\.]/);
+
+                        if (parts.length === 3) {
+
+                            let hari = parts[0].padStart(2, "0");
+                            let bulan = parts[1].padStart(2, "0");
+                            let tahun = parts[2];
+
+                            if (tahun.length === 2) {
+                                tahun = "20" + tahun;
+                            }
+
+                            // FORMAT PALING AMAN UNTUK .NET
+                            isoTanggal = `${tahun}-${bulan}-${hari}T00:00:00`;
+                        }
+                    }
+
+                    return {
+                        namaBarang: x.namaBarang,
+                        jumlah: Number(x.jumlah) || 0,
+                        hargaBeli: Number(x.hargaBeli) || 0,
+                        subTotal: Number(x.subTotal) || 0,
+                        nomorBatch: x.nomorBatch || null,
+                        tanggalKadarluasa: isoTanggal
+                    };
+                })
+            };
+
+            try {
+
+                const response = await fetch("/api/scan-nota/submit", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.log("HTTP Error:", response.status, text);
+                    throw new Error("HTTP Error " + response.status);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    statusDiv.className = "status success";
+                    statusDiv.innerHTML = "✅ Data berhasil dikirim ke aplikasi!";
+                    btn.innerText = "✔ Terkirim";
+                } else {
+                    throw new Error("Server gagal");
+                }
+
+            } catch (error) {
+
+                console.error("ERROR DETAIL:", error);
+
+                statusDiv.className = "status error";
+                statusDiv.innerHTML = "❌ Gagal mengirim data. Cek console.";
+                btn.disabled = false;
+                btn.innerText = "🚀 Kirim Hasil ke Aplikasi";
+            }
+        }
+
+        function mulaiItem() {
+
+            const btn = document.getElementById("btnMulaiItem");
+            const resultDiv = document.getElementById("ocrResult");
+
+            // =====================
+            // JIKA SUDAH AKTIF → MATIKAN
+            // =====================
+            if (sedangInputItem) {
+
+                sedangInputItem = false;
+                btn.textContent = "➕ Mulai Item";
+
+                const existingInfo = document.getElementById("modeInfo");
+                if (existingInfo) {
+                    existingInfo.remove();
+                }
+
+                return;
+            }
+
+            // =====================
+            // JIKA BELUM AKTIF → AKTIFKAN
+            // =====================
+            sedangInputItem = true;
+            btn.textContent = "❌ Batal Item";
+
+            draftItem = {
+                namaBarang: "",
+                jumlah: 0,
+                hargaBeli: 0,
+                subTotal: 0,
+                tanggalKadarluasa: null,
+                nomorBatch: null
+            };
+
+            if (!document.getElementById("modeInfo")) {
+                const info = document.createElement("div");
+                info.id = "modeInfo";
+                info.style.color = "green";
+                info.style.marginTop = "5px";
+                info.textContent = "Mode Item Aktif";
+
+                resultDiv.appendChild(info);
+            }
+        }
+
+        function simpanItem() {
+
+            if (!draftItem.namaBarang) {
+                alert("Nama barang belum diisi.");
+                return;
+            }
+
+            selectedData.items.push({ ...draftItem });
+
+            sedangInputItem = false;
+
+            draftItem = {
+                namaBarang: "",
+                jumlah: 0,
+                hargaBeli: 0,
+                subTotal: 0,
+                tanggalKadarluasa: null,
+                nomorBatch: null
+            };
+
+            tampilkanSelectedData();
+        }
+
+        function ambilAngka(text) {
+
+            if (!text) return 0;
+
+            // ambil angka + koma + titik
+            let cleaned = text.replace(/[^\d.,]/g, '');
+
+            // hapus semua koma (pemisah ribuan)
+            cleaned = cleaned.replace(/,/g, '');
+
+            // ambil angka pertama yang valid
+            const match = cleaned.match(/\d+(\.\d+)?/);
+
+            if (!match) return 0;
+
+            return parseFloat(match[0]);
+        }
+
+        function updateItem(index, field, value) {
+
+            if (field === "jumlah" || field === "hargaBeli" || field === "subTotal") {
+                selectedData.items[index][field] = parseFloat(value) || 0;
+            } else {
+                selectedData.items[index][field] = value;
+            }
+        }
+
+        function hapusItem(index) {
+            if (confirm("Hapus item ini?")) {
+                selectedData.items.splice(index, 1);
+                tampilkanSelectedData();
+            }
+        }
+
+        function normalizeTanggal(dateStr) {
+
+            const parts = dateStr.split(/[\/\-\.]/);
+
+            let hari = parts[0].padStart(2, '0');
+            let bulan = parts[1].padStart(2, '0');
+            let tahun = parts[2];
+
+            // Jika tahun 2 digit → ubah ke 20xx
+            if (tahun.length === 2) {
+                tahun = "20" + tahun;
+            }
+
+            return `${hari}/${bulan}/${tahun}`;
+        }
+
+    </script>
+
+</body>
+</html>

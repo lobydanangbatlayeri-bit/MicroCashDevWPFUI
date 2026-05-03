@@ -1,0 +1,78 @@
+﻿<Page x:Class="MicroCashDevWPFUI.Views.Pages.HakAksesPage"
+	  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	  xmlns:local="clr-namespace:MicroCashDevWPFUI.Views.Pages"
+	  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+	  xmlns:helpers="clr-namespace:MicroCashDevWPFUI.Helpers"
+	  xmlns:conv="clr-namespace:MicroCashDevWPFUI.Converters"
+	  d:DataContext="{d:DesignInstance local:HakAksesPage,
+                       IsDesignTimeCreatable=False}"
+	  mc:Ignorable="d"
+	  d:DesignHeight="450"
+	  d:DesignWidth="800"
+	  Title="HakAksesPage"
+	  ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+	  ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+	  Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+
+	<StackPanel Orientation="Vertical">
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<Grid Grid.Column="0"
+				  Margin="5"
+				  VerticalAlignment="Top">
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  HorizontalAlignment="Left"
+							  Text="Pilih User"
+							  Grid.Column="0" />
+				<ComboBox Grid.Column="1"
+						  ItemsSource="{Binding ViewModel.ItemsUser}"
+						  DisplayMemberPath="Username"
+						  Background="LightBlue"
+						  SelectedItem="{Binding ViewModel.SelectedUser, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+			</Grid>
+			<Grid Grid.Column="1"
+				  Margin="5">
+				<Grid.RowDefinitions>
+					<RowDefinition Height="Auto" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
+
+				<!-- Judul -->
+				<TextBlock Text="Fitur Yang Diijinkan"
+						   FontSize="16"
+						   FontWeight="Bold"
+						   HorizontalAlignment="Center"
+						   Margin="0,0,0,10"
+						   Grid.Row="0" />
+
+				<!-- TreeView Menu dengan Checkbox -->
+				<ScrollViewer Grid.Row="1"
+							  VerticalScrollBarVisibility="Auto"
+							  HorizontalScrollBarVisibility="Auto">
+					<TreeView ItemsSource="{Binding ViewModel.Menus}">
+						<TreeView.ItemTemplate>
+							<HierarchicalDataTemplate ItemsSource="{Binding Children}">
+								<StackPanel Orientation="Horizontal">
+									<CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+									<TextBlock Text="{Binding NamaMenu}"
+											   Margin="5,0,0,0" />
+								</StackPanel>
+							</HierarchicalDataTemplate>
+						</TreeView.ItemTemplate>
+					</TreeView>
+				</ScrollViewer>
+			</Grid>
+		</Grid>
+	</StackPanel>
+</Page>

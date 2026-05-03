@@ -1,0 +1,180 @@
+﻿<Page x:Class="MicroCashDevWPFUI.Views.Pages.DashboardPage"
+	  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	  xmlns:local="clr-namespace:MicroCashDevWPFUI.Views.Pages"
+	  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+	  xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+	  Title="DashboardPage"
+	  d:DataContext="{d:DesignInstance local:DashboardPage,
+                                     IsDesignTimeCreatable=False}"
+	  d:DesignHeight="768"
+	  d:DesignWidth="800"
+	  ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+	  ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+	  Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+	  mc:Ignorable="d">
+
+	<StackPanel Margin="30">
+
+		<!-- SUMMARY CARDS -->
+		<UniformGrid Columns="4"
+					 Margin="0,0,0,30">
+
+			<ui:Card Margin="10"
+					 Padding="20">
+				<StackPanel>
+					<TextBlock Text="Penjualan Hari Ini"
+							   Opacity="0.6" />
+					<TextBlock Text="{Binding ViewModel.TotalPenjualanHariIni, StringFormat=Rp {0:N0}}"
+							   FontSize="24"
+							   FontWeight="Bold" />
+				</StackPanel>
+			</ui:Card>
+
+			<ui:Card Margin="10"
+					 Padding="20">
+				<StackPanel>
+					<TextBlock Text="Laba Hari Ini"
+							   Opacity="0.6" />
+					<TextBlock Text="{Binding ViewModel.LabaHariIni, StringFormat=Rp {0:N0}}"
+							   FontSize="24"
+							   FontWeight="Bold"
+							   Foreground="Green" />
+				</StackPanel>
+			</ui:Card>
+
+			<ui:Card Margin="10"
+					 Padding="20">
+				<StackPanel>
+					<TextBlock Text="Nota Belum Dibayar"
+							   Opacity="0.6" />
+					<TextBlock Text="{Binding ViewModel.JumlahNotaBelumBayar}"
+							   FontSize="24"
+							   FontWeight="Bold"
+							   Foreground="Orange" />
+				</StackPanel>
+			</ui:Card>
+
+			<ui:Card Margin="10"
+					 Padding="20">
+				<StackPanel>
+					<TextBlock Text="Total Stok"
+							   Opacity="0.6" />
+					<TextBlock Text="{Binding ViewModel.TotalStok}"
+							   FontSize="24"
+							   FontWeight="Bold" />
+				</StackPanel>
+			</ui:Card>
+
+		</UniformGrid>
+
+		<!-- GRAFIK SECTION -->
+		<Grid Margin="0,0,0,30">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="2*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+
+			<!-- LINE CHART PENJUALAN -->
+			<ui:Card Grid.Column="0"
+					 Margin="10"
+					 Padding="20">
+				<StackPanel>
+					<TextBlock Text="Penjualan 7 Hari Terakhir"
+							   FontSize="18"
+							   FontWeight="SemiBold"
+							   Margin="0,0,0,15" />
+
+					<sp:WpfPlot x:Name="SalesPlot"
+								Height="300" />
+				</StackPanel>
+			</ui:Card>
+
+			<!-- BAR CHART TOP PRODUK -->
+			<ui:Card Grid.Column="1"
+					 Margin="10"
+					 Padding="20">
+				<StackPanel>
+					<TextBlock Text="Top Produk"
+							   FontSize="18"
+							   FontWeight="SemiBold"
+							   Margin="0,0,0,15" />
+
+					<sp:WpfPlot x:Name="TopProductPlot"
+								Height="300" />
+				</StackPanel>
+			</ui:Card>
+		</Grid>
+
+		<!-- TABLE SECTION -->
+		<Grid>
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+
+			<!-- Penjualan Terakhir -->
+			<ui:Card Grid.Column="0"
+					 Margin="10"
+					 Padding="15">
+				<StackPanel>
+					<TextBlock Text="Penjualan Terakhir"
+							   FontSize="16"
+							   FontWeight="SemiBold"
+							   Margin="0,0,0,10" />
+
+					<ui:DataGrid ItemsSource="{Binding ViewModel.RecentSales}"
+								 AutoGenerateColumns="False"
+								 CanUserAddRows="False"
+								 IsReadOnly="True"
+								 Height="260">
+
+						<ui:DataGrid.Columns>
+							<DataGridTextColumn Header="Nomor Nota"
+												Binding="{Binding NomorNota}"
+												Width="*" />
+							<DataGridTextColumn Header="Tanggal"
+												Binding="{Binding Tanggal}"
+												Width="*" />
+							<DataGridTextColumn Header="Total"
+												Binding="{Binding Total}"
+												Width="*" />
+						</ui:DataGrid.Columns>
+					</ui:DataGrid>
+				</StackPanel>
+			</ui:Card>
+
+			<!-- Produk Stok Rendah -->
+			<ui:Card Grid.Column="1"
+					 Margin="10"
+					 Padding="15">
+				<StackPanel>
+					<TextBlock Text="Stok Rendah"
+							   FontSize="16"
+							   FontWeight="SemiBold"
+							   Margin="0,0,0,10" />
+
+					<ui:DataGrid ItemsSource="{Binding ViewModel.LowStockProducts}"
+								 AutoGenerateColumns="False"
+								 CanUserAddRows="False"
+								 IsReadOnly="True"
+								 Height="260">
+
+						<ui:DataGrid.Columns>
+							<DataGridTextColumn Header="Produk"
+												Binding="{Binding NamaProduk}"
+												Width="*" />
+							<DataGridTextColumn Header="Stok"
+												Binding="{Binding Stok}"
+												Width="*" />
+						</ui:DataGrid.Columns>
+					</ui:DataGrid>
+				</StackPanel>
+			</ui:Card>
+		</Grid>
+
+	</StackPanel>
+
+</Page>

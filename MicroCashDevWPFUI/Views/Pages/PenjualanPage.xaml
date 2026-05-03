@@ -1,0 +1,275 @@
+﻿<Page x:Class="MicroCashDevWPFUI.Views.Pages.PenjualanPage"
+	  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	  xmlns:local="clr-namespace:MicroCashDevWPFUI.Views.Pages"
+	  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+	  xmlns:helpers="clr-namespace:MicroCashDevWPFUI.Helpers"
+	  d:DataContext="{d:DesignInstance local:PenjualanPage, IsDesignTimeCreatable=False}"
+	  mc:Ignorable="d"
+	  d:DesignHeight="450"
+	  d:DesignWidth="800"
+	  Title="PenjualanPage"
+	  ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+	  ui:Design.Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+	  Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+	  Loaded="Page_Loaded">
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="*" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<StackPanel Orientation="Vertical"
+					Grid.Row="0">
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Nama Barang"
+							  Grid.Column="0" />
+
+				<ui:AutoSuggestBox x:Name="txtNamaBarang"
+								   Grid.Column="1"
+								   Text="{Binding ViewModel.NamaBarang, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								   OriginalItemsSource="{Binding ViewModel.NamaBarangList, Mode=OneWay}" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<Grid Grid.Column="0"
+					  Margin="0,0,5,0">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+					<ui:TextBlock Padding="0,16"
+								  VerticalAlignment="Center"
+								  Text="Pilih Satuan"
+								  Grid.Column="0" />
+					<ComboBox Grid.Column="1"
+							  ItemsSource="{Binding ViewModel.ItemsSatuanProduk}"
+							  DisplayMemberPath="Satuan.NamaSatuan"
+							  Background="LightBlue"
+							  SelectedItem="{Binding ViewModel.SelectedSatuanProduk, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+				</Grid>
+				<Grid Grid.Column="1"
+					  Margin="5,0,0,0">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="150" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<ui:TextBlock Padding="0,16"
+								  VerticalAlignment="Center"
+								  Text="Harga Jual"
+								  Grid.Column="0" />
+
+					<TextBox Grid.Column="1"
+							 Text="{Binding ViewModel.HargaJual, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalFormat}}"
+							 helpers:ThousandSeparatorBehavior.IsEnabled="True"
+							 VerticalAlignment="Center"
+							 HorizontalAlignment="Stretch"
+							 IsReadOnly="True" />
+				</Grid>
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<Grid Grid.Column="0"
+					  Margin="0,0,5,0">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+					<ui:TextBlock Padding="0,16"
+								  VerticalAlignment="Center"
+								  Text="Jumlah"
+								  Grid.Column="0" />
+
+					<ui:NumberBox Grid.Column="1"
+								  Value="{Binding ViewModel.Jumlah, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+				</Grid>
+				<Grid Grid.Column="1"
+					  Margin="5,0,0,0">
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="150" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<ui:TextBlock Padding="0,16"
+								  VerticalAlignment="Center"
+								  Text="Sisa Stok"
+								  Grid.Column="0" />
+
+					<ui:NumberBox Grid.Column="1"
+								  Value="{Binding ViewModel.SisaStok, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								  IsReadOnly="True" />
+				</Grid>
+			</Grid>
+			<StackPanel Orientation="Horizontal"
+						HorizontalAlignment="Center">
+				<ui:Button Height="40"
+						   Width="200"
+						   Margin="5"
+						   Grid.Column="1"
+						   HorizontalAlignment="Center"
+						   Appearance="Success"
+						   Command="{Binding ViewModel.TambahCommand}"
+						   Click="BtnTambah_Click">
+					<ui:TextBlock Text="Tambah" />
+				</ui:Button>
+				<ui:Button Height="40"
+						   Width="200"
+						   Margin="5"
+						   Grid.Column="1"
+						   HorizontalAlignment="Center"
+						   Appearance="Danger"
+						   Command="{Binding ViewModel.BersihkanCommand}"
+						   Click="BtnBersihkan_Click">
+					<ui:TextBlock Text="Bersihkan" />
+				</ui:Button>
+			</StackPanel>
+		</StackPanel>
+		<Grid Grid.Row="1">
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*" />
+				<ColumnDefinition Width="*" />
+			</Grid.ColumnDefinitions>
+			<Grid Grid.Column="0"
+				  Margin="0,0,5,0">
+				<ui:DataGrid ItemsSource="{Binding ViewModel.ItemsKeranjang, Mode=OneWay}"
+							 AutoGenerateColumns="False"
+							 CanUserAddRows="False"
+							 CanUserDeleteRows="True"
+							 IsReadOnly="False"
+							 SelectionMode="Single"
+							 SelectionUnit="FullRow">
+					<ui:DataGrid.Columns>
+						<DataGridTemplateColumn Header="Options"
+												Width="*">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate>
+									<Button Command="{Binding DataContext.ViewModel.DeleteProdukCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+											CommandParameter="{Binding}"
+											ToolTip="Hapus Produk di Keranjang">
+										<ui:SymbolIcon Symbol="Delete24" />
+									</Button>
+								</DataTemplate>
+							</DataGridTemplateColumn.CellTemplate>
+						</DataGridTemplateColumn>
+
+						<DataGridTextColumn Header="Nama"
+											Binding="{Binding NamaBarang, Mode=OneWay}"
+											Width="2*"
+											IsReadOnly="True" />
+						<DataGridTextColumn Header="Satuan"
+											Binding="{Binding Satuan.NamaSatuan, Mode=OneWay}"
+											Width="*"
+											IsReadOnly="True" />
+						<DataGridTextColumn Header="Jumlah"
+											Binding="{Binding Jumlah, Mode=TwoWay}"
+											Width="*" />
+						<DataGridTextColumn Header="Harga"
+											Binding="{Binding HargaJual, Mode=OneWay, StringFormat=N0}"
+											Width="*"
+											IsReadOnly="True" />
+						<DataGridTextColumn Header="Sub Total"
+											Binding="{Binding SubTotal, Mode=OneWay, StringFormat=N0}"
+											Width="*"
+											IsReadOnly="True" />
+					</ui:DataGrid.Columns>
+				</ui:DataGrid>
+			</Grid>
+			<StackPanel Orientation="Vertical"
+						Grid.Column="1"
+						Margin="5,0,0,0">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="150" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<ui:TextBlock Padding="0,16"
+								  VerticalAlignment="Center"
+								  Text="Total Harga"
+								  Grid.Column="0" />
+
+					<TextBox Grid.Column="1"
+							 Text="{Binding ViewModel.TotalHarga, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalFormat}}"
+							 helpers:ThousandSeparatorBehavior.IsEnabled="True"
+							 VerticalAlignment="Center"
+							 HorizontalAlignment="Stretch"
+							 IsReadOnly="True" />
+				</Grid>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="150" />
+						<ColumnDefinition Width="*" />
+						<ColumnDefinition Width="Auto" />
+					</Grid.ColumnDefinitions>
+
+					<ui:TextBlock Padding="0,16"
+								  VerticalAlignment="Center"
+								  Text="Pembayaran"
+								  Grid.Column="0" />
+
+					<TextBox x:Name="txtPembayaran"
+							 Grid.Column="1"
+							 Text="{Binding ViewModel.Pembayaran, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalFormat}}"
+							 helpers:ThousandSeparatorBehavior.IsEnabled="True"
+							 VerticalAlignment="Center"
+							 HorizontalAlignment="Stretch" />
+
+					<ui:Button Grid.Column="2"
+							   Height="40"
+							   Width="100"
+							   Margin="5,0,0,0"
+							   Content="Uang Pas"
+							   Appearance="Info"
+							   Click="BtnUangPas_Click" />
+				</Grid>
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="150" />
+						<ColumnDefinition Width="*" />
+					</Grid.ColumnDefinitions>
+
+					<ui:TextBlock Padding="0,16"
+								  VerticalAlignment="Center"
+								  Text="Kembalian"
+								  Grid.Column="0" />
+
+					<TextBox Grid.Column="1"
+							 Text="{Binding ViewModel.Kembalian, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalFormat}}"
+							 helpers:ThousandSeparatorBehavior.IsEnabled="True"
+							 VerticalAlignment="Center"
+							 HorizontalAlignment="Stretch"
+							 IsReadOnly="True" />
+				</Grid>
+				<ui:Button Height="50"
+						   Width="150"
+						   Margin="10"
+						   Grid.Column="1"
+						   Appearance="Primary"
+						   HorizontalAlignment="Center"
+						   Command="{Binding ViewModel.JualCommand}"
+						   Click="BtnJual_Click">
+					<ui:TextBlock Text="Jual" />
+				</ui:Button>
+			</StackPanel>
+		</Grid>
+	</Grid>
+
+</Page>

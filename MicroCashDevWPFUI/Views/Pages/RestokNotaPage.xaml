@@ -1,0 +1,363 @@
+﻿<Page x:Class="MicroCashDevWPFUI.Views.Pages.RestokNotaPage"
+	  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	  xmlns:local="clr-namespace:MicroCashDevWPFUI.Views.Pages"
+	  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+	  xmlns:helpers="clr-namespace:MicroCashDevWPFUI.Helpers"
+	  xmlns:conv="clr-namespace:MicroCashDevWPFUI.Converters"
+	  d:DataContext="{d:DesignInstance local:RestokNotaPage,
+                      IsDesignTimeCreatable=False}"
+	  mc:Ignorable="d"
+	  d:DesignHeight="1200"
+	  d:DesignWidth="800"
+	  Title="RestokNotaPage"
+	  ui:Design.Background="{DynamicResource ApplicationBackgroundBrush}"
+	  ui:Design.Foreground="{DynamicResource TextFillColorPriBrush}"
+	  Foreground="{DynamicResource TextFillColorPryBrush}"
+	  Loaded="Page_Loaded">
+
+	<Page.Resources>
+		<!-- Expose ViewModel.ItemsSupplier untuk dipakai oleh ComboBox -->
+		<helpers:BindingProxy x:Key="SupplierProxy"
+							  Data="{Binding ViewModel.ItemsSupplier}" />
+
+		<!-- Converter untuk menampilkan format ribuan (id-ID, 2 decimals) -->
+		<conv:DecimalToFormattedStringConverter x:Key="DecimalFormat" />
+	</Page.Resources>
+
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="*" />
+			<RowDefinition Height="Auto" />
+		</Grid.RowDefinitions>
+
+		<StackPanel Orientation="Vertical">
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="auto" />
+					<ColumnDefinition Width="auto" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Pilih Supplier"
+							  Grid.Column="1" />
+				<ComboBox x:Name="cmbSupplier"
+						  Grid.Column="2"
+						  Width="200"
+						  ItemsSource="{Binding ViewModel.ItemsSupplier}"
+						  DisplayMemberPath="NamaSupplier"
+						  Background="LightBlue"
+						  SelectedItem="{Binding ViewModel.SelectedSupplier, Mode=TwoWay}" />
+				<ui:Button Height="40"
+						   Width="200"
+						   Margin="5"
+						   Grid.Column="3"
+						   Appearance="Primary"
+						   Click="BtnTambahSupplier_Click">
+					<ui:TextBlock Text="Tambah Supplier" />
+				</ui:Button>
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Nomor Nota/Faktur"
+							  Grid.Column="0" />
+				<ui:AutoSuggestBox Grid.Column="1"
+								   Text="{Binding ViewModel.NomorNota, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								   OriginalItemsSource="{Binding ViewModel.NomorNotaList, Mode=OneWay}" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Tanggal Restok"
+							  Grid.Column="0" />
+				<DatePicker Grid.Column="1"
+							SelectedDate="{Binding ViewModel.TanggalRestok, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+							SelectedDateFormat="Short"
+							Language="id-ID" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Nama Barang"
+							  Grid.Column="0" />
+
+				<ui:AutoSuggestBox x:Name="txtNamaBarang"
+								   Grid.Column="1"
+								   Text="{Binding ViewModel.NamaBarang, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+								   OriginalItemsSource="{Binding ViewModel.NamaBarangList, Mode=OneWay}" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Tambahkan Stock"
+							  Grid.Column="0" />
+
+				<ui:NumberBox Grid.Column="1"
+							  Value="{Binding ViewModel.TambahStock, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Harga Beli"
+							  Grid.Column="0" />
+
+				<!-- Ganti NumberBox dengan TextBox terformat (editable) -->
+				<TextBox Grid.Column="1"
+						 Text="{Binding ViewModel.HargaBeli, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalFormat}}"
+						 helpers:ThousandSeparatorBehavior.IsEnabled="True"
+						 VerticalAlignment="Center"
+						 HorizontalAlignment="Stretch" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Sub Total"
+							  Grid.Column="0" />
+
+				<!-- SubTotal: tampilkan terformat, read-only -->
+				<TextBox Grid.Column="1"
+						 Text="{Binding ViewModel.SubTotal, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalFormat}}"
+						 VerticalAlignment="Center"
+						 HorizontalAlignment="Stretch" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Nomor Batch"
+							  Grid.Column="0" />
+
+				<ui:TextBox Grid.Column="1"
+							Text="{Binding ViewModel.NomorBatch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Tanggal Masuk"
+							  Grid.Column="0" />
+				<DatePicker Grid.Column="1"
+							SelectedDate="{Binding ViewModel.TanggalMasuk, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+							SelectedDateFormat="Short"
+							Language="id-ID" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Tanggal Kadarluasa"
+							  Grid.Column="0" />
+				<DatePicker Grid.Column="1"
+							SelectedDate="{Binding ViewModel.TanggalKadarluasa, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+							SelectedDateFormat="Short"
+							Language="id-ID" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+					<ColumnDefinition Width="auto" />
+				</Grid.ColumnDefinitions>
+
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Sisa Stock"
+							  Grid.Column="0" />
+
+				<ui:NumberBox Grid.Column="1"
+							  Value="{Binding ViewModel.SisaStok}"
+							  IsReadOnly="True" />
+
+				<ui:TextBlock Grid.Column="2"
+							  Padding="10,0,0,0"
+							  Width="100"
+							  Text="{Binding ViewModel.NamaSatuan}"
+							  HorizontalAlignment="Center"
+							  VerticalAlignment="Center" />
+			</Grid>
+
+			<Grid>
+				<Grid.ColumnDefinitions>
+					<ColumnDefinition Width="150" />
+					<ColumnDefinition Width="*" />
+				</Grid.ColumnDefinitions>
+
+				<ui:TextBlock Padding="0,16"
+							  VerticalAlignment="Center"
+							  Text="Total"
+							  Grid.Column="0" />
+
+				<TextBox Grid.Column="1"
+						 Text="{Binding ViewModel.Total, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalFormat}}"
+						 VerticalAlignment="Center"
+						 HorizontalAlignment="Stretch" />
+			</Grid>
+
+			<StackPanel Orientation="Horizontal"
+						HorizontalAlignment="Center"
+						Margin="0,20,0,0">
+
+				<ui:Button Height="60"
+						   Width="150"
+						   Margin="20"
+						   Grid.Column="1"
+						   Appearance="Primary"
+						   Command="{Binding ViewModel.TambahObatCommand}"
+						   HorizontalAlignment="Center"
+						   Click="BtnTambahObat_Click">
+					<ui:TextBlock Text="Tambah Obat" />
+				</ui:Button>
+
+				<ui:Button Height="60"
+						   Width="150"
+						   Margin="20"
+						   Grid.Column="1"
+						   Appearance="Primary"
+						   Command="{Binding ViewModel.TerimaScanNotaCommand}"
+						   HorizontalAlignment="Center"
+						   Click="BtnTambahObat_Click">
+					<ui:TextBlock Text="Terima Scan Nota" />
+				</ui:Button>
+
+			</StackPanel>
+
+		</StackPanel>
+
+		<Grid Grid.Row="1">
+			<StackPanel Orientation="Vertical">
+				<ui:DataGrid x:Name="dgStockProduk"
+							 AutoGenerateColumns="False"
+							 CanUserAddRows="False"
+							 HeadersVisibility="All"
+							 IsReadOnly="False"
+							 SelectionUnit="Cell"
+							 ItemsSource="{Binding ViewModel.ItemsStockProduk}"
+							 Margin="10">
+
+					<ui:DataGrid.Columns>
+
+						<DataGridTemplateColumn Header="Options"
+												Width="*">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate>
+									<Button Command="{Binding DataContext.ViewModel.DeleteProdukStockCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+											CommandParameter="{Binding}">
+										<ui:SymbolIcon Symbol="Delete24" />
+									</Button>
+								</DataTemplate>
+							</DataGridTemplateColumn.CellTemplate>
+						</DataGridTemplateColumn>
+
+						<DataGridTextColumn Header="Nama Barang"
+											Binding="{Binding NamaBarang}"
+											Width="2*" />
+
+						<DataGridTextColumn Header="Jumlah"
+											Binding="{Binding Jumlah}"
+											Width="*" />
+
+						<DataGridTextColumn Header="H Beli"
+											Binding="{Binding HargaBeli}"
+											Width="*" />
+
+						<DataGridTextColumn Header="Sub Total"
+											Binding="{Binding SubTotal}"
+											Width="*" />
+
+						<DataGridTextColumn Header="Nomor Batch"
+											Binding="{Binding NomorBatch}"
+											Width="*" />
+
+						<DataGridTextColumn Header="T Masuk"
+											Binding="{Binding TanggalMasuk, StringFormat={}{0:dd/MM/yyyy}}"
+											Width="*" />
+
+						<DataGridTextColumn Header="T Kadarluasa"
+											Binding="{Binding TanggalKadarluasa, StringFormat={}{0:dd/MM/yyyy}}"
+											Width="*" />
+
+					</ui:DataGrid.Columns>
+
+				</ui:DataGrid>
+
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition />
+						<ColumnDefinition />
+					</Grid.ColumnDefinitions>
+					<ui:Button Height="60"
+							   Width="150"
+							   Margin="20"
+							   Grid.Column="0"
+							   Appearance="Primary"
+							   Command="{Binding ViewModel.SimpanCommand}"
+							   HorizontalAlignment="Center"
+							   Click="BtnSimpan_Click">
+						<ui:TextBlock Text="Simpan Restok" />
+					</ui:Button>
+					<ui:Button Height="60"
+							   Width="150"
+							   Margin="20"
+							   Grid.Column="1"
+							   Appearance="Dark"
+							   Command="{Binding ViewModel.BatalCommand}"
+							   Click="BtnBatal_Click"
+							   HorizontalAlignment="Center">
+						<ui:TextBlock Text="Batal" />
+					</ui:Button>
+				</Grid>
+			</StackPanel>
+		</Grid>
+
+	</Grid>
+</Page>
