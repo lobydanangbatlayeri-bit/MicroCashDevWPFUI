@@ -15,12 +15,11 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 	{
 		private readonly IDialogService _dialogService;
 		private readonly ISupplierService _supplierService;
-		private readonly IProdukService _produkService;
-		private readonly IProdukSatuanService _produkSatuanService;
 		private readonly IRestokService _restokService;
 		private readonly IPembelianService _pembelianService;
+        private readonly IProdukCacheService _produkCacheService;
 
-		[ObservableProperty]
+        [ObservableProperty]
 		private ObservableCollection<SupplierItem> itemsSupplier = new();
 		[ObservableProperty]
 		private SupplierItem? selectedSupplier;
@@ -63,46 +62,71 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 
 		private ProdukSatuan? _selectedProdukSatuan;
 		private bool _initialized;
-		private List<ProductItem> _productItems = new();
+        private CancellationTokenSource? _cts;
 
-		public RestokNotaViewModel(
+        public RestokNotaViewModel(
 			IDialogService dialogService,
 			ISupplierService supplierService,
-			IProdukService produkService,
-			IProdukSatuanService produkSatuanService,
 			IRestokService restokService,
-			IPembelianService pembelianService)
+			IPembelianService pembelianService,
+			IProdukCacheService produkCacheService)
 		{
 			_dialogService = dialogService;
 			_supplierService = supplierService;
-			_produkService = produkService;
-			_produkSatuanService = produkSatuanService;
 			_restokService = restokService;
 			_pembelianService = pembelianService;
-		}
+			_produkCacheService = produkCacheService;
 
-		public async Task EnsureInitializedAsync()
+            _produkCacheService.OnCacheUpdated += OnCacheUpdatedHandler;
+        }
+
+        private void OnCacheUpdatedHandler()
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                _ = LoadProdukAsync();
+            });
+        }
+
+        public async Task EnsureInitializedAsync()
 		{
 			if (_initialized)
 				return;
 
 			_initialized = true;
-			await LoadSupplierAsync();
+
+            await _produkCacheService.EnsureLoadedAsync();
+            await LoadSupplierAsync();
 			await LoadProdukAsync();
 		}
 
-		public async Task RefreshProdukAsync()
-		{
-			await LoadProdukAsync();
-		}
+        partial void OnNamaBarangChanged(string? value)
+        {
+            _cts?.Cancel();
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
 
-		partial void OnNamaBarangChanged(string? value)
-		{
-			_ = LoadSatuanBeliAsync(value ?? string.Empty);
-		}
+            _ = DebounceLoadAsync(value, token);
+        }
 
+        private async Task DebounceLoadAsync(string? value, CancellationToken token)
+        {
+            try
+            {
+                await Task.Delay(300, token);
 
-		partial void OnTambahStockChanged(int value)
+                if (token.IsCancellationRequested)
+                    return;
+
+                await LoadSatuanBeliAsync(value ?? string.Empty);
+            }
+            catch (TaskCanceledException)
+            {
+                // aman, abaikan
+            }
+        }
+
+        partial void OnTambahStockChanged(int value)
 		{
 			HitungSubTotal();
 		}
@@ -151,26 +175,20 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 			SelectedSupplier = ItemsSupplier.FirstOrDefault();
 		}
 
-		private async Task LoadProdukAsync()
-		{
-			NamaBarangList.Clear();
-			_productItems.Clear();
+        private Task LoadProdukAsync()
+        {
+            var list = _produkCacheService.GetAll().Select(p => p.NamaBarang).ToList();
 
-			var produkData = await _produkService.GetAllAsync();
+            Debug.WriteLine($"JUMLAH PRODUK: {list.Count}");
 
-			foreach (var p in produkData)
-			{
-				NamaBarangList.Add(p.NamaBarang);
+            NamaBarangList.Clear();
+            foreach (var item in list)
+                NamaBarangList.Add(item);
 
-				_productItems.Add(new ProductItem
-				{
-					Id = p.Id,
-					NamaBarang = p.NamaBarang
-				});
-			}
-		}
+            return Task.CompletedTask;
+        }
 
-		private async Task LoadSatuanBeliAsync(string namaBarang)
+        private async Task LoadSatuanBeliAsync(string namaBarang)
 		{
 			NamaSatuan = string.Empty;
 			SisaStok = 0;
@@ -179,15 +197,14 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 			if (string.IsNullOrWhiteSpace(namaBarang))
 				return;
 
-			var produk = (await _produkService.GetAllAsync())
-				.FirstOrDefault(p => p.NamaBarang.Equals(namaBarang, StringComparison.OrdinalIgnoreCase));
+            var produk = _produkCacheService.Find(namaBarang);
 
-			if (produk == null)
+            if (produk == null)
 				return;
 
-			var satuans = await _produkSatuanService.GetByProdukIdAsync(produk.Id);
+            var satuans = await _produkCacheService.GetSatuanAsync(produk.Id);
 
-			var satuanBeli = satuans
+            var satuanBeli = satuans
 				.OrderByDescending(s => s.JumlahPerSatuan)
 				.First();
 

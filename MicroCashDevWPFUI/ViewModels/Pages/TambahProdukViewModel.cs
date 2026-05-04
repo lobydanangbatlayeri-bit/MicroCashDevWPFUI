@@ -14,8 +14,9 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 		private readonly IProdukService _produkService;
 		private readonly IProdukSatuanService _produkSatuanService;
 		private readonly IDialogService _dialogService;
+        private readonly IProdukCacheService _produkCacheService;
 
-		[ObservableProperty] private ObservableCollection<SatuanItem> itemsSatuan = new();
+        [ObservableProperty] private ObservableCollection<SatuanItem> itemsSatuan = new();
 		[ObservableProperty] private ObservableCollection<ProdukSatuanItem> itemsSatuanProduk = new();
 		[ObservableProperty] private bool isiPerBoxEnabled;
 		[ObservableProperty] private bool isAllItemsSelected;
@@ -32,12 +33,14 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 			ISatuanService satuanService,
 			IProdukService produkService,
 			IProdukSatuanService produkSatuanService,
-			IDialogService dialogService)
+			IDialogService dialogService,
+			IProdukCacheService produkCacheService)
 		{
 			_satuanService = satuanService;
 			_produkService = produkService;
 			_produkSatuanService = produkSatuanService;
 			_dialogService = dialogService;
+			_produkCacheService = produkCacheService;
 
 			_ = InitializeAsync();
 		}
@@ -307,7 +310,9 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 				// 🔁 SINKRON SATUAN
 				await SinkronProdukSatuanAsync(produk.Id);
 
-				NamaBarang = string.Empty;
+                await _produkCacheService.AddOrUpdateAsync(produk);
+
+                NamaBarang = string.Empty;
 				ItemsSatuanProduk.Clear();
 				await LoadProdukAsync();
 

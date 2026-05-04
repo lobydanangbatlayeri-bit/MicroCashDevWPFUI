@@ -17,7 +17,6 @@ namespace MicroCashDevWPFUI.Views.Pages
 			Loaded += async (_, __) =>
 			{
 				await ViewModel.EnsureInitializedAsync();
-				await ViewModel.RefreshProdukAsync();
 			};
 
 			this.PreviewKeyDown += RestokManualPage_PreviewKeyDown;
