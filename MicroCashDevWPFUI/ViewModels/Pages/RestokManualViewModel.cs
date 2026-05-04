@@ -9,13 +9,12 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 {
     public partial class RestokManualViewModel : ObservableObject
     {
-		private readonly IProdukService _produkService;
-		private readonly IProdukSatuanService _produkSatuanService;
 		private readonly IRestokService _restokService;
 		private readonly IDialogService _dialogService;
 		private readonly IPricingService _pricingService;
+        private readonly IProdukCacheService _produkCacheService;
 
-		[ObservableProperty] private string namaBarang = string.Empty;
+        [ObservableProperty] private string namaBarang = string.Empty;
 		[ObservableProperty] private ObservableCollection<string> namaBarangList = new();
 
 		[ObservableProperty] private ObservableCollection<ProdukSatuan> itemsSatuan = new();
@@ -29,53 +28,97 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 		[ObservableProperty] private decimal estimasiHargaBeli;
 
 		private bool _initialized;
+        private CancellationTokenSource? _cts;
+        private bool _isDisposed;
+        private bool _isSubscribed;
 
-		public RestokManualViewModel
+
+        public RestokManualViewModel
 			(
-			IProdukService produkService,
-			IProdukSatuanService produkSatuanService,
 			IRestokService restokService,
 			IPricingService pricingService,
-			IDialogService dialogService
-			)
+			IDialogService dialogService,
+            IProdukCacheService produkCacheService
+            )
 		{
-			_produkService = produkService;
-			_produkSatuanService = produkSatuanService;
 			_restokService = restokService;
 			_pricingService = pricingService;
 			_dialogService = dialogService;
-		}
+            _produkCacheService = produkCacheService;
 
-		public async Task EnsureInitializedAsync()
-		{
-			if (_initialized)
-				return;
+            _produkCacheService.OnCacheUpdated += OnCacheUpdatedHandler;
+        }
 
-			_initialized = true;
-			await LoadProdukAsync();
-		}
+        public void Dispose()
+        {
+            if (!_isSubscribed) return;
 
-		public async Task RefreshProdukAsync()
-		{
-			await LoadProdukAsync();
-		}
+            _produkCacheService.OnCacheUpdated -= OnCacheUpdatedHandler;
+            _isSubscribed = false;
+            _isDisposed = false;
+        }
 
-		private async Task LoadProdukAsync()
-		{
-			NamaBarangList.Clear();
-			var produkData = await _produkService.GetAllAsync();
-			foreach (var p in produkData)
-			{
-				NamaBarangList.Add(p.NamaBarang);
-			}
-		}
+        private void OnCacheUpdatedHandler()
+        {
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                LoadProduk();
+            });
+        }
 
-		partial void OnNamaBarangChanged(string value)
-		{
-			_ = UpdateItemsSatuanAsync(value);
-		}
+        public async Task EnsureInitializedAsync()
+        {
+            if (_initialized)
+                return;
 
-		partial void OnSelectedSatuanChanged(ProdukSatuan? value)
+            _initialized = true;
+
+            if (!_isSubscribed)
+            {
+                _produkCacheService.OnCacheUpdated += OnCacheUpdatedHandler;
+                _isSubscribed = true;
+            }
+
+            await _produkCacheService.EnsureLoadedAsync();
+            LoadProduk();
+        }
+
+        public void RefreshProduk()
+        {
+            LoadProduk();
+        }
+
+        private void LoadProduk()
+        {
+            NamaBarangList = new ObservableCollection<string>(
+				_produkCacheService.GetAll().Select(p => p.NamaBarang)
+			);
+        }
+
+        partial void OnNamaBarangChanged(string value)
+        {
+            _cts?.Cancel();
+            _cts = new CancellationTokenSource();
+            var token = _cts.Token;
+
+            _ = DebounceAsync(value, token);
+        }
+
+        private async Task DebounceAsync(string value, CancellationToken token)
+        {
+            try
+            {
+                await Task.Delay(300, token);
+
+                if (token.IsCancellationRequested)
+                    return;
+
+                await UpdateItemsSatuanAsync(value);
+            }
+            catch (TaskCanceledException) { }
+        }
+
+        partial void OnSelectedSatuanChanged(ProdukSatuan? value)
 		{
 			if (value == null)
 			{
@@ -86,11 +129,14 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 				return;
 			}
 
-			var satuanDasar = ItemsSatuan
+            var satuanDasar = ItemsSatuan
 				.OrderBy(s => s.JumlahPerSatuan)
-				.First();
+				.FirstOrDefault();
 
-			int stokDasar = satuanDasar.ProdukBatchs?.Sum(b => b.Stok) ?? 0;
+            if (satuanDasar == null)
+                return;
+
+            int stokDasar = satuanDasar.ProdukBatchs?.Sum(b => b.Stok) ?? 0;
 
 			HargaJual = value.HargaJual;
 			SatuanPilih = value.Satuan?.NamaSatuan ?? "";
@@ -98,32 +144,37 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 			SisaStok = stokDasar / value.JumlahPerSatuan;
 		}
 
-		private async Task UpdateItemsSatuanAsync(string namaBarang)
-		{
-			ItemsSatuan.Clear();
-			SelectedSatuan = null;			
+        private async Task UpdateItemsSatuanAsync(string namaBarang)
+        {
+            ItemsSatuan.Clear();
+            SelectedSatuan = null;
 
-			if (string.IsNullOrWhiteSpace(namaBarang))
-				return;
+            if (string.IsNullOrWhiteSpace(namaBarang))
+                return;
 
-			var produkList = await _produkService.GetAllAsync();
-			var produk = produkList
-				.FirstOrDefault(p => p.NamaBarang.Equals(namaBarang, StringComparison.OrdinalIgnoreCase));
+            var produk = _produkCacheService.Find(namaBarang);
 
-			if (produk != null)
-			{
-				var satuans = await _produkSatuanService.GetByProdukIdAsync(produk.Id);
+            if (produk == null)
+                return;
 
-				foreach (var ps in satuans)
-				{
-					ItemsSatuan.Add(ps);
-				}
+            var satuans = await _produkCacheService.GetSatuanAsync(produk.Id);
 
-				SelectedSatuan = ItemsSatuan.First();
-			}
-		}
+            foreach (var ps in satuans)
+            {
+                ItemsSatuan.Add(ps);
+            }
 
-		[RelayCommand]
+            var satuanDasar = ItemsSatuan
+				.OrderBy(s => s.JumlahPerSatuan)
+				.FirstOrDefault();
+
+            if (satuanDasar == null)
+                return;
+
+            SelectedSatuan = ItemsSatuan.FirstOrDefault();
+        }
+
+        [RelayCommand]
 		private async Task SimpanAsync()
 		{
 			if (SelectedSatuan == null)

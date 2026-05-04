@@ -14,15 +14,25 @@ namespace MicroCashDevWPFUI.Views.Pages
 			DataContext = this;
 			InitializeComponent();
 
-			Loaded += async (_, __) =>
-			{
-				await ViewModel.EnsureInitializedAsync();
-			};
+            Loaded += OnLoaded;
 
-			this.PreviewKeyDown += RestokManualPage_PreviewKeyDown;
+            Unloaded += OnUnloaded;
+
+            this.PreviewKeyDown += RestokManualPage_PreviewKeyDown;
 		}
+        private async void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            await ViewModel.EnsureInitializedAsync();
+            Loaded -= OnLoaded;
+        }
 
-		private void Page_Loaded(object sender, RoutedEventArgs e)
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            ViewModel.Dispose();
+            Unloaded -= OnUnloaded;
+        }
+
+        private void Page_Loaded(object sender, RoutedEventArgs e)
 		{
 			Dispatcher.BeginInvoke(new Action(() =>
 			{

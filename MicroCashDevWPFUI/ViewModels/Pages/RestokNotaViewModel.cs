@@ -63,6 +63,8 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
 		private ProdukSatuan? _selectedProdukSatuan;
 		private bool _initialized;
         private CancellationTokenSource? _cts;
+        private bool _isDisposed;
+        private bool _isSubscribed;
 
         public RestokNotaViewModel(
 			IDialogService dialogService,
@@ -80,6 +82,15 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
             _produkCacheService.OnCacheUpdated += OnCacheUpdatedHandler;
         }
 
+        public void Dispose()
+        {
+            if (!_isSubscribed) return;
+
+            _produkCacheService.OnCacheUpdated -= OnCacheUpdatedHandler;
+            _isDisposed = false;
+            _isSubscribed = false;
+        }
+
         private void OnCacheUpdatedHandler()
         {
             App.Current.Dispatcher.Invoke(() =>
@@ -89,16 +100,22 @@ namespace MicroCashDevWPFUI.ViewModels.Pages
         }
 
         public async Task EnsureInitializedAsync()
-		{
-			if (_initialized)
-				return;
+        {
+            if (_initialized)
+                return;
 
-			_initialized = true;
+            _initialized = true;
+
+            if (!_isSubscribed)
+            {
+                _produkCacheService.OnCacheUpdated += OnCacheUpdatedHandler;
+                _isSubscribed = true;
+            }
 
             await _produkCacheService.EnsureLoadedAsync();
             await LoadSupplierAsync();
-			await LoadProdukAsync();
-		}
+            await LoadProdukAsync();
+        }
 
         partial void OnNamaBarangChanged(string? value)
         {
