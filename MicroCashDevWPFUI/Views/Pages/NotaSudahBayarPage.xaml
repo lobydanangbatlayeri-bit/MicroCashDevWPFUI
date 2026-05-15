@@ -8,7 +8,7 @@
 	  xmlns:helpers="clr-namespace:MicroCashDevWPFUI.Helpers"
 	  xmlns:conv="clr-namespace:MicroCashDevWPFUI.Converters"
 	  d:DataContext="{d:DesignInstance local:NotaSudahBayarPage,
-                IsDesignTimeCreatable=False}"
+					IsDesignTimeCreatable=False}"
 	  mc:Ignorable="d"
 	  d:DesignHeight="450"
 	  d:DesignWidth="800"
@@ -111,7 +111,36 @@
 							 helpers:DataGridAutoSaveBehavior.IsEnabled="True"
 							 Grid.Row="0">
 					<ui:DataGrid.Columns>
-						<DataGridTextColumn Header="No."
+                        <!-- Kolom Indikator Status Buka/Tutup -->
+                        <DataGridTemplateColumn Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Margin="6,0">
+                                        <!-- Berikan Nama x:Name="btnToggle" agar bisa diikat oleh Style di dalamnya -->
+                                        <ToggleButton x:Name="btnToggle"
+										  IsChecked="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}, Mode=TwoWay}"
+										  Background="Transparent"
+										  BorderBrush="Transparent"
+										  Padding="4">
+                                            <ui:SymbolIcon Symbol="ChevronRight16">
+                                                <ui:SymbolIcon.Style>
+                                                    <Style TargetType="ui:SymbolIcon">
+                                                        <Style.Triggers>
+                                                            <!-- FIX: Mengikat Trigger langsung ke status IsChecked milik ToggleButton di atas -->
+                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Value="True">
+                                                                <Setter Property="Symbol" Value="ChevronDown16"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorLight2Brush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ui:SymbolIcon.Style>
+                                            </ui:SymbolIcon>
+                                        </ToggleButton>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="No."
 											Binding="{Binding Nomor, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
 											Width="auto"
 											IsReadOnly="True" />
@@ -161,37 +190,42 @@
 
 					<ui:DataGrid.RowDetailsTemplate>
 						<DataTemplate>
-							<Border Padding="8"
-									Margin="4"
-									Background="#0F000000"
-									CornerRadius="6">
+                            <Expander Header="Klik untuk melihat Detail Transaksi &amp; Batch Produk"
+									  Margin="12,4" IsExpanded="True" HorizontalAlignment="Stretch">
+                                <ScrollViewer MaxHeight="350" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                    <Border Padding="8"
+											Margin="4"
+											Background="#0F000000"
+											CornerRadius="6">
 
-								<StackPanel>
+                                        <StackPanel>
 
-									<!-- BANK -->
-									<TextBlock Text="BANK"
+                                            <!-- BANK -->
+                                            <TextBlock Text="BANK"
 											   FontWeight="SemiBold"
 											   Margin="0,0,0,6" />
 
-									<ui:DataGrid ItemsSource="{Binding Bank}"
+                                            <ui:DataGrid ItemsSource="{Binding Bank}"
 												 AutoGenerateColumns="False"
 												 CanUserAddRows="False"
 												 HeadersVisibility="Column"
 												 MaxHeight="250"
 												 helpers:DataGridAutoSaveBehavior.IsEnabled="True">
 
-										<ui:DataGrid.Columns>
-											<DataGridTextColumn Header="Nama Bank"
+                                                <ui:DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Nama Bank"
 																Binding="{Binding NamaBank}"
 																IsReadOnly="True" />
-											<DataGridTextColumn Header="Nomor Rekening"
+                                                    <DataGridTextColumn Header="Nomor Rekening"
 																Binding="{Binding NomorRekening}"
 																IsReadOnly="True" />
-										</ui:DataGrid.Columns>
-									</ui:DataGrid>
-								</StackPanel>
-							</Border>
-						</DataTemplate>
+                                                </ui:DataGrid.Columns>
+                                            </ui:DataGrid>
+                                        </StackPanel>
+                                    </Border>
+                                </ScrollViewer>
+                            </Expander>
+                        </DataTemplate>
 					</ui:DataGrid.RowDetailsTemplate>
 				</ui:DataGrid>
 				<StackPanel Orientation="Horizontal"

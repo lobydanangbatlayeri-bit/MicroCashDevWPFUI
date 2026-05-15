@@ -1,0 +1,19 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+
+    <!-- 1. STYLE: Memperbaiki Buka-Tutup Baris Detail Secara Bergantian -->
+    <Style x:Key="AutoToggleRowStyle" TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+        <Style.Triggers>
+            <!-- Saat baris diklik / dipilih, tampilkan area detailnya -->
+            <Trigger Property="IsSelected" Value="True">
+                <Setter Property="DetailsVisibility" Value="Visible" />
+            </Trigger>
+            <!-- Saat memilih baris lain, sembunyikan kembali detail baris ini -->
+            <Trigger Property="IsSelected" Value="False">
+                <Setter Property="DetailsVisibility" Value="Collapsed" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>

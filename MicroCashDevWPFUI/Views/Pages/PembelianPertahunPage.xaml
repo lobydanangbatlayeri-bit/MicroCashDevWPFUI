@@ -110,18 +110,49 @@
 							 SelectionUnit="FullRow"
 							 MaxHeight="600"
 							 helpers:DataGridAutoSaveBehavior.IsEnabled="True"
-							 Grid.Row="0">
+							 Grid.Row="0"
+                             RowDetailsVisibilityMode="VisibleWhenSelected"
+							 RowStyle="{StaticResource AutoToggleRowStyle}">
 					<ui:DataGrid.Columns>
-						<DataGridTextColumn Header="No."
+                        <!-- Kolom Indikator Status Buka/Tutup -->
+                        <DataGridTemplateColumn Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Margin="6,0">
+                                        <!-- Berikan Nama x:Name="btnToggle" agar bisa diikat oleh Style di dalamnya -->
+                                        <ToggleButton x:Name="btnToggle"
+													  IsChecked="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}, Mode=TwoWay}"
+													  Background="Transparent"
+													  BorderBrush="Transparent"
+													  Padding="4">
+                                            <ui:SymbolIcon Symbol="ChevronRight16">
+                                                <ui:SymbolIcon.Style>
+                                                    <Style TargetType="ui:SymbolIcon">
+                                                        <Style.Triggers>
+                                                            <!-- FIX: Mengikat Trigger langsung ke status IsChecked milik ToggleButton di atas -->
+                                                            <DataTrigger Binding="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Value="True">
+                                                                <Setter Property="Symbol" Value="ChevronDown16"/>
+                                                                <Setter Property="Foreground" Value="{DynamicResource SystemAccentColorLight2Brush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ui:SymbolIcon.Style>
+                                            </ui:SymbolIcon>
+                                        </ToggleButton>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="No."
 											Binding="{Binding Nomor, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
 											Width="auto"
 											IsReadOnly="True" />
 						<DataGridTextColumn Header="Tanggal"
 											Width="*"
 											Binding="{Binding Tanggal,
-										StringFormat='{}{0:dd/MM/yyyy}',
-										ConverterCulture=id-ID,
-										UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
+											StringFormat='{}{0:dd/MM/yyyy}',
+											ConverterCulture=id-ID,
+											UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
 						<DataGridTextColumn Header="Nomor Faktur"
 											Width="*"
 											Binding="{Binding NomorFaktur, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
@@ -158,96 +189,101 @@
 
 					<ui:DataGrid.RowDetailsTemplate>
 						<DataTemplate>
-							<Border Padding="8"
-									Margin="4"
-									Background="#0F000000"
-									CornerRadius="6">
+                            <Expander Header="Klik untuk melihat Detail Transaksi &amp; Batch Produk"
+									  Margin="12,4" IsExpanded="True" HorizontalAlignment="Stretch">
+                                <ScrollViewer MaxHeight="350" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                    <Border Padding="8"
+											Margin="4"
+											Background="#0F000000"
+											CornerRadius="6">
 
-								<StackPanel>
+                                        <StackPanel>
 
-									<!-- DETAIL PEMBELIAN -->
-									<TextBlock Text="Detail Pembelian"
+                                            <!-- DETAIL PEMBELIAN -->
+                                            <TextBlock Text="Detail Pembelian"
 											   FontWeight="SemiBold"
 											   Margin="0,0,0,6" />
 
-									<ui:DataGrid ItemsSource="{Binding DetailPembelians}"
+                                            <ui:DataGrid ItemsSource="{Binding DetailPembelians}"
 												 AutoGenerateColumns="False"
 												 CanUserAddRows="False"
 												 HeadersVisibility="Column"
 												 MaxHeight="250"
 												 helpers:DataGridAutoSaveBehavior.IsEnabled="True">
 
-										<ui:DataGrid.Columns>
-											<DataGridTextColumn Header="Produk"
+                                                <ui:DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Produk"
 																Binding="{Binding Produk}"
 																IsReadOnly="True" />
-											<DataGridTemplateColumn Header="Satuan"
+                                                    <DataGridTemplateColumn Header="Satuan"
 																	Width="150"
 																	IsReadOnly="True">
 
-												<!-- Tampilan normal -->
-												<DataGridTemplateColumn.CellTemplate>
-													<DataTemplate>
-														<TextBlock Text="{Binding Satuan.NamaSatuan}" />
-													</DataTemplate>
-												</DataGridTemplateColumn.CellTemplate>
+                                                        <!-- Tampilan normal -->
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="{Binding Satuan.NamaSatuan}" />
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
 
-												<!-- Mode edit -->
-												<DataGridTemplateColumn.CellEditingTemplate>
-													<DataTemplate>
-														<ComboBox ItemsSource="{Binding DataContext.ViewModel.ItemsSatuan,
+                                                        <!-- Mode edit -->
+                                                        <DataGridTemplateColumn.CellEditingTemplate>
+                                                            <DataTemplate>
+                                                                <ComboBox ItemsSource="{Binding DataContext.ViewModel.ItemsSatuan,
 															  RelativeSource={RelativeSource AncestorType=Page}}"
 																  SelectedItem="{Binding Satuan, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 																  DisplayMemberPath="NamaSatuan" />
-													</DataTemplate>
-												</DataGridTemplateColumn.CellEditingTemplate>
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellEditingTemplate>
 
-											</DataGridTemplateColumn>
+                                                    </DataGridTemplateColumn>
 
-											<DataGridTextColumn Header="Qty"
+                                                    <DataGridTextColumn Header="Qty"
 																Binding="{Binding Jumlah, UpdateSourceTrigger=PropertyChanged,Mode=TwoWay}" />
-											<DataGridTextColumn Header="Harga"
+                                                    <DataGridTextColumn Header="Harga"
 																Binding="{Binding HargaBeli, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
-											<DataGridTextColumn Header="Subtotal"
+                                                    <DataGridTextColumn Header="Subtotal"
 																Binding="{Binding Subtotal, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
-										</ui:DataGrid.Columns>
-									</ui:DataGrid>
+                                                </ui:DataGrid.Columns>
+                                            </ui:DataGrid>
 
-									<!-- PRODUK BATCH -->
-									<TextBlock Text="Produk Batch"
+                                            <!-- PRODUK BATCH -->
+                                            <TextBlock Text="Produk Batch"
 											   FontWeight="SemiBold"
 											   Margin="0,12,0,6" />
 
-									<ItemsControl ItemsSource="{Binding DetailPembelians}">
-										<ItemsControl.ItemTemplate>
-											<DataTemplate>
-												<StackPanel Margin="0,0,0,8">
-													<TextBlock Text="{Binding Produk}"
+                                            <ItemsControl ItemsSource="{Binding DetailPembelians}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,0,0,8">
+                                                            <TextBlock Text="{Binding Produk}"
 															   FontWeight="Bold" />
-													<DataGrid ItemsSource="{Binding ProdukBatchs}"
+                                                            <DataGrid ItemsSource="{Binding ProdukBatchs}"
 															  AutoGenerateColumns="False"
 															  HeadersVisibility="Column"
 															  CanUserAddRows="False"
 															  helpers:DataGridAutoSaveBehavior.IsEnabled="True">
-														<DataGrid.Columns>
-															<DataGridTextColumn Header="Batch"
+                                                                <DataGrid.Columns>
+                                                                    <DataGridTextColumn Header="Batch"
 																				Binding="{Binding BatchNumber, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
-															<DataGridTextColumn Header="Expired"
+                                                                    <DataGridTextColumn Header="Expired"
 																				Binding="{Binding TanggalKadarluasa,
 																			StringFormat='{}{0:dd/MM/yyyy}',
 																			ConverterCulture=id-ID, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
-															<DataGridTextColumn Header="Stok"
+                                                                    <DataGridTextColumn Header="Stok"
 																				Binding="{Binding Stok, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}" />
-														</DataGrid.Columns>
-													</DataGrid>
-												</StackPanel>
-											</DataTemplate>
-										</ItemsControl.ItemTemplate>
-									</ItemsControl>
+                                                                </DataGrid.Columns>
+                                                            </DataGrid>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
 
-								</StackPanel>
-							</Border>
-						</DataTemplate>
+                                        </StackPanel>
+                                    </Border>
+                                </ScrollViewer>
+                            </Expander>
+                        </DataTemplate>
 					</ui:DataGrid.RowDetailsTemplate>
 				</ui:DataGrid>
 				<StackPanel Orientation="Horizontal"

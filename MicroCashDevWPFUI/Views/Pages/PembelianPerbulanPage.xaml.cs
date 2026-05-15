@@ -1,5 +1,7 @@
 ﻿using MicroCashDevWPFUI.ViewModels.Pages;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using Wpf.Ui.Abstractions.Controls;
 
 namespace MicroCashDevWPFUI.Views.Pages
@@ -14,5 +16,5 @@ namespace MicroCashDevWPFUI.Views.Pages
 
 			InitializeComponent();
 		}
-	}
+    }
 }
